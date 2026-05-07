@@ -65,24 +65,30 @@ const ADMIN_PASSWORD = 'admin123'
 
 onMounted(async () => {
   isAdmin.value = localStorage.getItem('isAdmin') === 'true'
+  console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL)
+  console.log('Supabase Key:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '已配置' : '未配置')
   await loadMessages()
 })
 
 async function loadMessages() {
   try {
+    console.log('开始加载留言...')
     const { data, error } = await supabase
       .from('messages')
       .select('*')
       .order('time', { ascending: false })
     
     if (error) {
-      console.error('加载留言失败:', error)
+      console.error('加载留言失败:', error.message, error.details)
+      alert('加载失败：' + error.message)
       return
     }
     
+    console.log('留言加载成功:', data?.length || 0, '条')
     messages.value = data || []
   } catch (err) {
     console.error('加载留言异常:', err)
+    alert('加载异常：' + err.message)
   }
 }
 
