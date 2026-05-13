@@ -54,7 +54,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { supabase } from './supabase'
 
 const messages = ref([])
 const newMessage = ref({ name: '', content: '' })
@@ -62,28 +61,27 @@ const isAdmin = ref(false)
 const showLogin = ref(false)
 const password = ref('')
 const ADMIN_PASSWORD = 'admin123'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 onMounted(async () => {
   isAdmin.value = localStorage.getItem('isAdmin') === 'true'
-  console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL)
-  console.log('Supabase Key:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '已配置' : '未配置')
+  console.log('API Base:', API_BASE)
   await loadMessages()
 })
 
 async function loadMessages() {
   try {
     console.log('开始加载留言...')
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('time', { ascending: false })
-    
-    if (error) {
-      console.error('加载留言失败:', error.message, error.details)
-      alert('加载失败：' + error.message)
+    const response = await fetch(`${API_BASE}/messages`)
+
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('加载留言失败:', error)
+      alert('加载失败：' + error.error)
       return
     }
-    
+
+    const data = await response.json()
     console.log('留言加载成功:', data?.length || 0, '条')
     messages.value = data || []
   } catch (err) {
@@ -97,27 +95,30 @@ async function addMessage() {
     alert('请填写名字和留言内容')
     return
   }
-  
+
   try {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([{
+    const response = await fetch(`${API_BASE}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         name: newMessage.value.name.trim(),
         content: newMessage.value.content.trim(),
         time: Date.now()
-      }])
-      .select()
-    
-    if (error) {
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
       console.error('添加留言失败:', error)
       alert('添加留言失败')
       return
     }
-    
-    if (data && data.length > 0) {
-      messages.value.unshift(data[0])
+
+    const data = await response.json()
+    if (data) {
+      messages.value.unshift(data)
     }
-    
+
     newMessage.value = { name: '', content: '' }
   } catch (err) {
     console.error('添加留言异常:', err)
@@ -128,17 +129,17 @@ async function addMessage() {
 async function deleteMessage(id) {
   if (confirm('确定要删除这条留言吗？')) {
     try {
-      const { error } = await supabase
-        .from('messages')
-        .delete()
-        .eq('id', id)
-      
-      if (error) {
+      const response = await fetch(`${API_BASE}/messages/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
         console.error('删除留言失败:', error)
         alert('删除留言失败')
         return
       }
-      
+
       messages.value = messages.value.filter(msg => msg.id !== id)
     } catch (err) {
       console.error('删除留言异常:', err)
