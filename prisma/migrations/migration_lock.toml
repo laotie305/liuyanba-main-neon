@@ -1,0 +1,6 @@
+provider = "postgresql"
+
+[[migrations]]
+id = "20260515000000_init"
+checksum = "f8b9c6d8e7a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8e7d6c5b4a3"
+executedAt = "2026-05-15T00:00:00Z"
