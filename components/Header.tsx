@@ -3,8 +3,8 @@
 import SignOutButton from './SignOutButton'
 
 interface HeaderProps {
-  userName?: string
-  userEmail?: string
+  userName?: string | null
+  userEmail?: string | null
 }
 
 export default function Header({ userName, userEmail }: HeaderProps) {
